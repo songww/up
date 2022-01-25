@@ -1,13 +1,16 @@
-pub type GBDResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-pub mod cli;
+pub mod archive;
+pub mod dl;
 pub mod ghapi;
+pub mod opt;
 pub mod sysinfo;
-pub mod utils;
+pub mod ui;
 
-#[macro_export]
-macro_rules! show_error(
-    ($($args:tt)+) => ({
-        eprintln!($($args)+);
-    })
-);
+pub trait Anyhow<T> {
+    fn anyhow(self) -> anyhow::Result<T>;
+}
+
+impl<T> Anyhow<T> for surf::Result<T> {
+    fn anyhow(self) -> anyhow::Result<T> {
+        self.map_err(|err| anyhow::anyhow!(err))
+    }
+}

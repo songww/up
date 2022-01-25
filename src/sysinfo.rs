@@ -1,66 +1,63 @@
-use nix::sys::utsname;
-
 pub const APPLE: [&str; 4] = ["macos", "darwin", "mac", "dmg"];
 pub const LINUX: [&str; 1] = ["linux"];
 pub const AMD64: [&str; 4] = ["x64", "x86_64", "amd64", "64bit"];
 pub const ARM64: [&str; 2] = ["aarch64", "arm64"];
 
-#[derive(Debug, Default)]
-pub struct SystemInfo {
-    pub arch: String,
-    pub os: String,
+#[derive(Debug)]
+pub struct System {
+    arch: Arch,
+    os: OS,
 }
 
-#[derive(Debug)]
-pub enum PlatformOS {
+#[derive(Clone, Copy, Debug)]
+pub enum OS {
     Windows,
     Linux,
     Darwin,
     Unknown,
 }
 
-#[derive(Debug)]
-pub enum PlatformArch {
-    X8664,
-    Arm64,
+#[allow(non_camel_case_types)]
+#[derive(Clone, Copy, Debug)]
+pub enum Arch {
+    amd64,
+    aarch64,
     Unknown,
 }
 
-impl SystemInfo {
+impl System {
     pub fn new() -> Self {
-        let uts_name = utsname::uname();
-        Self {
-            os: uts_name.sysname().to_lowercase(),
-            arch: uts_name.machine().to_lowercase(),
-        }
+        let os = if cfg!(target_os = "linux") {
+            OS::Linux
+        } else if cfg!(target_os = "macos") {
+            OS::Darwin
+        } else if cfg!(windows) {
+            OS::Windows
+        } else {
+            panic!("This platform dose not support yet!");
+        };
+        let arch = if cfg!(target_arch = "x86_64") {
+            Arch::amd64
+        } else if cfg!(target_arch = "aarch64") {
+            Arch::aarch64
+        } else {
+            panic!("This arch dose not support yet!");
+        };
+        Self { os, arch }
     }
 
-    pub fn platform_os(&self) -> PlatformOS {
-        for apple in APPLE.iter() {
-            if self.os.contains(apple) {
-                return PlatformOS::Darwin;
-            }
-        }
-        for linux in LINUX.iter() {
-            if self.os.contains(linux) {
-                return PlatformOS::Linux;
-            }
-        }
-        PlatformOS::Unknown
+    pub fn os(&self) -> OS {
+        self.os
     }
 
-    pub fn platform_arch(&self) -> PlatformArch {
-        for amd64 in AMD64.iter() {
-            if self.arch.contains(amd64) {
-                return PlatformArch::X8664;
-            }
-        }
-
-        for arm64 in ARM64.iter() {
-            if self.arch.contains(arm64) {
-                return PlatformArch::Arm64;
-            }
-        }
-        PlatformArch::Unknown
+    pub fn arch(&self) -> Arch {
+        self.arch
     }
 }
+
+// pub struct SysDetector {}
+// impl SysDetector {
+//     fn detect(name: &str) -> System {
+//         for
+//     }
+// }
