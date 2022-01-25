@@ -303,16 +303,15 @@ impl Release {
     pub fn url(&self) -> &surf::Url {
         &self.url
     }
+
+    pub fn desc(&self) -> Option<&str> {
+        self.desc.as_ref().map(|s| s.as_str())
+    }
 }
 
 impl ToString for Release {
     fn to_string(&self) -> String {
-        format!(
-            "{}\t{}\t({})",
-            self.name,
-            self.desc.clone().unwrap_or_default(),
-            self.published_at.format("%F %T")
-        )
+        format!("{}\t({})", self.name, self.published_at.format("%F %T"))
     }
 }
 
@@ -331,7 +330,7 @@ impl ToString for Asset {
             "{}\t{}\t\t{}",
             bytesize::ByteSize::b(self.size as _).to_string_as(true),
             self.name,
-            &label
+            &label,
         )
     }
 }

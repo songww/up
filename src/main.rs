@@ -48,11 +48,11 @@ async fn main() -> anyhow::Result<()> {
         .await?
         .read_to_string(&mut locked_versions)
         .await?;
-    println!(
-        "{} read_to_string {}",
-        &locked_versions_path.display(),
-        &locked_versions
-    );
+    // println!(
+    //     "{} read_to_string {}",
+    //     &locked_versions_path.display(),
+    //     &locked_versions
+    // );
     let mut locked_versions: opt::AppVersions = toml::de::from_str(&locked_versions)?;
 
     match cli.command {
@@ -149,7 +149,6 @@ async fn main() -> anyhow::Result<()> {
         opt::Commands::Upgrade { allow_prerelease } => {
             //
             for (name, appcfg) in config.apps.iter() {
-                todo!()
                 // up(&mut opt).await?;
             }
             unimplemented!()
@@ -239,6 +238,11 @@ async fn up(opts: &mut opt::Options) -> anyhow::Result<()> {
         println!("Select the latest release: {}", latest_release.to_string());
         latest_release
     };
+    if let Some(desc) = release.desc() {
+        println!("");
+        println!("{}", desc);
+        println!("");
+    }
     let assets = release.assets(&mut None).await.anyhow()?;
     let mut asset = None;
     if let Some(asset_name) = &opts.asset_name {
@@ -250,11 +254,13 @@ async fn up(opts: &mut opt::Options) -> anyhow::Result<()> {
     let asset = if asset.is_none() {
         let options: Vec<_> = assets
             .iter()
-            .filter(|asset| compatible(asset))
+            .filter(|asset| up::is_compatible(&opts.name, &release.name, &asset.name))
             .map(|asset| asset.clone())
             .collect();
         if options.len() == 1 {
-            options[0].clone()
+            let asset = &options[0];
+            println!("Select the asset: {}", asset.to_string());
+            asset.clone()
         } else if !options.is_empty() {
             ui::choose(&options, "Select the asset").await?.clone()
         } else {
@@ -264,11 +270,10 @@ async fn up(opts: &mut opt::Options) -> anyhow::Result<()> {
         asset.unwrap().clone()
     };
 
-    opts.asset_name.replace(asset.name);
+    opts.asset_name.replace(asset.name.clone());
 
     let executable = executable_dir.join(opts.binname.as_ref().unwrap_or(&opts.name));
 
-    /*
     let asset_path = asset.download().await?;
 
     tokio::fs::remove_file(&executable).await?;
@@ -303,8 +308,9 @@ async fn up(opts: &mut opt::Options) -> anyhow::Result<()> {
     } else {
         tokio::fs::copy(&asset_path, &executable).await?;
     }
-    // tokio::fs::remove_file(&asset_path).await?;
-    */
+
+    tokio::fs::remove_file(&asset_path).await?;
+
     opts.app_version.replace(opt::AppVersion {
         name: opts.name.to_string(),
         version: release.name,
@@ -314,8 +320,4 @@ async fn up(opts: &mut opt::Options) -> anyhow::Result<()> {
         last_releases_at: last_releases_since,
     });
     Ok(())
-}
-
-fn compatible(_asset: &ghapi::Asset) -> bool {
-    false
 }

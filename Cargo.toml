@@ -29,6 +29,7 @@ tokio-util = { version = "0.6", features = [ "compat" ] }
 toml = { version = "0.5", features = [ "preserve_order" ] }
 indexmap = { version = "1", features = ["std", "serde-1"] }
 reqwest = { version = "0.11", features = ["stream", "trust-dns", "socks"] }
+target = { version = "0.12", package = "target-lexicon", features = ["std"] }
 compressed = { version = "0.12", package = "compress-tools", features = [ "tokio_support" ] }
 
 [dependencies.tokio]

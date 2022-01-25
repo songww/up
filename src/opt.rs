@@ -36,7 +36,13 @@ pub enum Commands {
         allow_prerelease: bool,
         #[clap(long, help = "Do something after downloaded.")]
         after_downloaded: Option<String>,
-        #[clap(long, arg_enum, help = "Type, exe/font/config.")]
+        #[clap(
+            long,
+            arg_enum,
+            parse(try_from_str),
+            default_value = "executable",
+            help = "installation type"
+        )]
         r#type: Type,
         #[clap(long, help = "which to unpack")]
         unpack: Option<String>,
